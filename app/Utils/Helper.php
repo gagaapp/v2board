@@ -120,7 +120,8 @@ class Helper
     public static function isSuperAdmin(Request $request): bool
     {
         $uid = $request->session()->get('id');
-        if (env("super_admin_id") == $uid) {
+        $SuperAdminID = config("auth.SUPER_ADMIN_ID", "0");
+        if ($SuperAdminID == $uid) {
             return true;
         }
         return false;

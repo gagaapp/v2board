@@ -100,4 +100,6 @@ return [
         ],
     ],
 
+    'SUPER_ADMIN_ID' => env('SUPER_ADMIN_ID', '0'),
+
 ];
