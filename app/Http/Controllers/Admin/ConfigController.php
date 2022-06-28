@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\Admin\ConfigSave;
 use App\Jobs\SendEmailJob;
 use App\Services\TelegramService;
+use App\Utils\Helper;
 use Illuminate\Http\Request;
 use App\Utils\Dict;
 use App\Http\Controllers\Controller;
@@ -38,6 +39,7 @@ class ConfigController extends Controller
 
     public function testSendMail(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $obj = new SendEmailJob([
             'email' => $request->session()->get('email'),
             'subject' => 'This is v2board test email',
@@ -56,6 +58,7 @@ class ConfigController extends Controller
 
     public function setTelegramWebhook(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $hookUrl = url('/api/v1/guest/telegram/webhook?access_token=' . md5(config('v2board.telegram_bot_token', $request->input('telegram_bot_token'))));
         $telegramService = new TelegramService($request->input('telegram_bot_token'));
         $telegramService->getMe();
@@ -67,6 +70,7 @@ class ConfigController extends Controller
 
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $key = $request->input('key');
         $data = [
             'invite' => [
@@ -171,6 +175,7 @@ class ConfigController extends Controller
 
     public function save(ConfigSave $request)
     {
+        Helper::MustSupperAdmin($request);
         $data = $request->validated();
         $config = config('v2board');
         foreach (ConfigSave::RULES as $k => $v) {

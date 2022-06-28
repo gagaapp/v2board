@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\Admin\KnowledgeSave;
 use App\Http\Requests\Admin\KnowledgeSort;
 use App\Models\Knowledge;
+use App\Utils\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ class KnowledgeController extends Controller
 {
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if ($request->input('id')) {
             $knowledge = Knowledge::find($request->input('id'))->toArray();
             if (!$knowledge) abort(500, '知识不存在');
@@ -29,6 +31,7 @@ class KnowledgeController extends Controller
 
     public function getCategory(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         return response([
             'data' => array_keys(Knowledge::get()->groupBy('category')->toArray())
         ]);
@@ -36,6 +39,7 @@ class KnowledgeController extends Controller
 
     public function save(KnowledgeSave $request)
     {
+        Helper::MustSupperAdmin($request);
         $params = $request->validated();
 
         if (!$request->input('id')) {
@@ -57,6 +61,7 @@ class KnowledgeController extends Controller
 
     public function show(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数有误');
         }
@@ -76,6 +81,7 @@ class KnowledgeController extends Controller
 
     public function sort(KnowledgeSort $request)
     {
+        Helper::MustSupperAdmin($request);
         DB::beginTransaction();
         try {
             foreach ($request->input('knowledge_ids') as $k => $v) {
@@ -95,6 +101,7 @@ class KnowledgeController extends Controller
 
     public function drop(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数有误');
         }

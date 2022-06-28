@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Jobs\SendEmailJob;
 use App\Services\TicketService;
+use App\Utils\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Ticket;
@@ -16,6 +17,7 @@ class TicketController extends Controller
 {
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if ($request->input('id')) {
             $ticket = Ticket::where('id', $request->input('id'))
                 ->first();
@@ -58,6 +60,7 @@ class TicketController extends Controller
 
     public function reply(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数错误');
         }
@@ -77,6 +80,7 @@ class TicketController extends Controller
 
     public function close(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数错误');
         }

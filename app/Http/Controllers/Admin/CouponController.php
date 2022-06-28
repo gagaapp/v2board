@@ -16,6 +16,7 @@ class CouponController extends Controller
 {
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $current = $request->input('current') ? $request->input('current') : 1;
         $pageSize = $request->input('pageSize') >= 10 ? $request->input('pageSize') : 10;
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
@@ -32,6 +33,7 @@ class CouponController extends Controller
 
     public function show(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数有误');
         }
@@ -51,6 +53,7 @@ class CouponController extends Controller
 
     public function generate(CouponGenerate $request)
     {
+        Helper::MustSupperAdmin($request);
         if ($request->input('generate_count')) {
             $this->multiGenerate($request);
             return;
@@ -79,6 +82,7 @@ class CouponController extends Controller
 
     private function multiGenerate(CouponGenerate $request)
     {
+        Helper::MustSupperAdmin($request);
         $coupons = [];
         $coupon = $request->validated();
         $coupon['created_at'] = $coupon['updated_at'] = time();
@@ -118,6 +122,7 @@ class CouponController extends Controller
 
     public function drop(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数有误');
         }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\Admin\PlanSave;
 use App\Http\Requests\Admin\PlanSort;
 use App\Http\Requests\Admin\PlanUpdate;
+use App\Utils\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
@@ -16,6 +17,7 @@ class PlanController extends Controller
 {
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $counts = User::select(
             DB::raw("plan_id"),
             DB::raw("count(*) as count")
@@ -41,6 +43,7 @@ class PlanController extends Controller
 
     public function save(PlanSave $request)
     {
+        Helper::MustSupperAdmin($request);
         $params = $request->validated();
         if ($request->input('id')) {
             $plan = Plan::find($request->input('id'));
@@ -74,6 +77,7 @@ class PlanController extends Controller
 
     public function drop(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (Order::where('plan_id', $request->input('id'))->first()) {
             abort(500, '该订阅下存在订单无法删除');
         }
@@ -93,6 +97,7 @@ class PlanController extends Controller
 
     public function update(PlanUpdate $request)
     {
+        Helper::MustSupperAdmin($request);
         $updateData = $request->only([
             'show',
             'renew'
@@ -116,6 +121,7 @@ class PlanController extends Controller
 
     public function sort(PlanSort $request)
     {
+        Helper::MustSupperAdmin($request);
         DB::beginTransaction();
         foreach ($request->input('plan_ids') as $k => $v) {
             if (!Plan::find($v)->update(['sort' => $k + 1])) {

@@ -20,6 +20,7 @@ class OrderController extends Controller
 {
     private function filter(Request $request, &$builder)
     {
+        Helper::MustSupperAdmin($request);
         if ($request->input('filter')) {
             foreach ($request->input('filter') as $filter) {
                 if ($filter['key'] === 'email') {
@@ -39,6 +40,7 @@ class OrderController extends Controller
 
     public function detail(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $order = Order::find($request->input('id'));
         if (!$order) abort(500, '订单不存在');
         $order['commission_log'] = CommissionLog::where('trade_no', $order->trade_no)->get();
@@ -52,6 +54,7 @@ class OrderController extends Controller
 
     public function fetch(OrderFetch $request)
     {
+        Helper::MustSupperAdmin($request);
         $current = $request->input('current') ? $request->input('current') : 1;
         $pageSize = $request->input('pageSize') >= 10 ? $request->input('pageSize') : 10;
         $orderModel = Order::orderBy('created_at', 'DESC');
@@ -80,6 +83,7 @@ class OrderController extends Controller
 
     public function paid(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $order = Order::where('trade_no', $request->input('trade_no'))
             ->first();
         if (!$order) {
@@ -98,6 +102,7 @@ class OrderController extends Controller
 
     public function cancel(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $order = Order::where('trade_no', $request->input('trade_no'))
             ->first();
         if (!$order) {
@@ -116,6 +121,7 @@ class OrderController extends Controller
 
     public function update(OrderUpdate $request)
     {
+        Helper::MustSupperAdmin($request);
         $params = $request->only([
             'commission_status'
         ]);
@@ -139,6 +145,7 @@ class OrderController extends Controller
 
     public function assign(OrderAssign $request)
     {
+        Helper::MustSupperAdmin($request);
         $plan = Plan::find($request->input('plan_id'));
         $user = User::where('email', $request->input('email'))->first();
 

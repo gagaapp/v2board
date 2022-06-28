@@ -40,6 +40,7 @@ class PaymentController extends Controller
 
     public function getPaymentForm(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $paymentService = new PaymentService($request->input('payment'), $request->input('id'));
         return response([
             'data' => $paymentService->form()
@@ -48,6 +49,7 @@ class PaymentController extends Controller
 
     public function show(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $payment = Payment::find($request->input('id'));
         if (!$payment) abort(500, '支付方式不存在');
         $payment->enable = !$payment->enable;
@@ -59,6 +61,7 @@ class PaymentController extends Controller
 
     public function save(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (!config('v2board.app_url')) {
             abort(500, '请在站点配置中配置站点地址');
         }
@@ -101,6 +104,7 @@ class PaymentController extends Controller
 
     public function drop(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $payment = Payment::find($request->input('id'));
         if (!$payment) abort(500, '支付方式不存在');
         return response([

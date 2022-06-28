@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Services\ThemeService;
+use App\Utils\Helper;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Http\Request;
@@ -44,6 +45,7 @@ class ThemeController extends Controller
 
     public function getThemeConfig(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $payload = $request->validate([
             'name' => 'required|in:' . join(',', $this->themes)
         ]);
@@ -54,6 +56,7 @@ class ThemeController extends Controller
 
     public function saveThemeConfig(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         $payload = $request->validate([
             'name' => 'required|in:' . join(',', $this->themes),
             'config' => 'required'

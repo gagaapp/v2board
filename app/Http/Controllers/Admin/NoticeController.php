@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Requests\Admin\NoticeSave;
+use App\Utils\Helper;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Notice;
@@ -12,6 +13,7 @@ class NoticeController extends Controller
 {
     public function fetch(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         return response([
             'data' => Notice::orderBy('id', 'DESC')->get()
         ]);
@@ -19,6 +21,7 @@ class NoticeController extends Controller
 
     public function save(NoticeSave $request)
     {
+        Helper::MustSupperAdmin($request);
         $data = $request->only([
             'title',
             'content',
@@ -45,6 +48,7 @@ class NoticeController extends Controller
 
     public function show(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数有误');
         }
@@ -64,6 +68,7 @@ class NoticeController extends Controller
 
     public function drop(Request $request)
     {
+        Helper::MustSupperAdmin($request);
         if (empty($request->input('id'))) {
             abort(500, '参数错误');
         }
