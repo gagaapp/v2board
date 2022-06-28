@@ -6,6 +6,7 @@ use App\Models\ServerV2ray;
 use App\Models\ServerShadowsocks;
 use App\Models\ServerTrojan;
 use App\Models\User;
+use Illuminate\Http\Request;
 
 class Helper
 {
@@ -114,5 +115,14 @@ class Helper
     public static function randomPort($range) {
         $portRange = explode('-', $range);
         return rand($portRange[0], $portRange[1]);
+    }
+
+    public static function isSuperAdmin(Request $request): bool
+    {
+        $uid = $request->session()->get('id');
+        if (env("super_admin_id") == $uid) {
+            return true;
+        }
+        return false;
     }
 }

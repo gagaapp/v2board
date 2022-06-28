@@ -19,6 +19,9 @@ class UserController extends Controller
 {
     public function resetSecret(Request $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $user = User::find($request->input('id'));
         if (!$user) abort(500, '用户不存在');
         $user->token = Helper::guid();
@@ -30,6 +33,9 @@ class UserController extends Controller
 
     private function filter(Request $request, $builder)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $filters = $request->input('filter');
         if ($filters) {
             foreach ($filters as $k => $filter) {
@@ -54,6 +60,9 @@ class UserController extends Controller
 
     public function fetch(UserFetch $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $current = $request->input('current') ? $request->input('current') : 1;
         $pageSize = $request->input('pageSize') >= 10 ? $request->input('pageSize') : 10;
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
@@ -84,6 +93,9 @@ class UserController extends Controller
 
     public function getUserInfoById(Request $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         if (empty($request->input('id'))) {
             abort(500, '参数错误');
         }
@@ -98,6 +110,9 @@ class UserController extends Controller
 
     public function update(UserUpdate $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $params = $request->validated();
         $user = User::find($request->input('id'));
         if (!$user) {
@@ -140,6 +155,9 @@ class UserController extends Controller
 
     public function dumpCSV(Request $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $userModel = User::orderBy('id', 'asc');
         $this->filter($request, $userModel);
         $res = $userModel->get();
@@ -168,6 +186,9 @@ class UserController extends Controller
 
     public function generate(UserGenerate $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         if ($request->input('email_prefix')) {
             if ($request->input('plan_id')) {
                 $plan = Plan::find($request->input('plan_id'));
@@ -202,6 +223,9 @@ class UserController extends Controller
 
     private function multiGenerate(Request $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         if ($request->input('plan_id')) {
             $plan = Plan::find($request->input('plan_id'));
             if (!$plan) {
@@ -243,6 +267,9 @@ class UserController extends Controller
 
     public function sendMail(UserSendMail $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
         $sort = $request->input('sort') ? $request->input('sort') : 'created_at';
         $builder = User::orderBy($sort, $sortType);
@@ -269,6 +296,9 @@ class UserController extends Controller
 
     public function ban(Request $request)
     {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '参数错误');
+        }
         $sortType = in_array($request->input('sort_type'), ['ASC', 'DESC']) ? $request->input('sort_type') : 'DESC';
         $sort = $request->input('sort') ? $request->input('sort') : 'created_at';
         $builder = User::orderBy($sort, $sortType);
