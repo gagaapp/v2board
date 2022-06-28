@@ -125,4 +125,11 @@ class Helper
         }
         return false;
     }
+
+    public static function MustSupperAdmin(Request $request)
+    {
+        if (!Helper::isSuperAdmin($request)) {
+            abort(500, '权限不够');
+        }
+    }
 }
