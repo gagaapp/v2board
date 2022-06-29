@@ -23,7 +23,7 @@ class StatController extends Controller
 {
     public function getOverride(Request $request)
     {
-        Helper::MustSupperAdmin($request);
+//        Helper::MustSupperAdmin($request);
         return response([
             'data' => [
                 'month_income' => Order::where('created_at', '>=', strtotime(date('Y-m-1')))
@@ -54,7 +54,7 @@ class StatController extends Controller
 
     public function getOrder(Request $request)
     {
-        Helper::MustSupperAdmin($request);
+//        Helper::MustSupperAdmin($request);
         $statistics = StatOrder::where('record_type', 'd')
             ->limit(31)
             ->orderBy('record_at', 'DESC')
