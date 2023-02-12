@@ -36,7 +36,14 @@ class Stash
         $proxies = [];
 
         foreach ($servers as $item) {
-            if ($item['type'] === 'shadowsocks') {
+            if ($item['type'] === 'shadowsocks'
+                && in_array($item['cipher'], [
+                    'aes-128-gcm',
+                    'aes-192-gcm',
+                    'aes-256-gcm',
+                    'chacha20-ietf-poly1305'
+                ])
+            ) {
                 array_push($proxy, self::buildShadowsocks($user['uuid'], $item));
                 array_push($proxies, $item['name']);
             }
@@ -122,7 +129,6 @@ class Stash
                     $array['ws-opts']['path'] = $wsSettings['path'];
                 if (isset($wsSettings['headers']['Host']) && !empty($wsSettings['headers']['Host']))
                     $array['ws-opts']['headers'] = ['Host' => $wsSettings['headers']['Host']];
-                // TODO: 2022.06.01 remove it
                 if (isset($wsSettings['path']) && !empty($wsSettings['path']))
                     $array['ws-path'] = $wsSettings['path'];
                 if (isset($wsSettings['headers']['Host']) && !empty($wsSettings['headers']['Host']))
@@ -153,6 +159,11 @@ class Stash
         if (!empty($server['server_name'])) $array['sni'] = $server['server_name'];
         if (!empty($server['allow_insecure'])) $array['skip-cert-verify'] = ($server['allow_insecure'] ? true : false);
         return $array;
+    }
+
+    private function isRegex($exp)
+    {
+        return @preg_match($exp, null) !== false;
     }
 
     private function isMatch($exp, $str)

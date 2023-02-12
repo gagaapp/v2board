@@ -38,7 +38,8 @@
                 'ja-JP',
                 'vi-VN',
                 'ko-KR',
-                'zh-TW'
+                'zh-TW',
+                'fa-IR'
             ],
             logo: '{{$logo}}'
         }
@@ -49,6 +50,7 @@
     <script src="/theme/{{$theme}}/assets/i18n/ja-JP.js?v={{$version}}"></script>
     <script src="/theme/{{$theme}}/assets/i18n/vi-VN.js?v={{$version}}"></script>
     <script src="/theme/{{$theme}}/assets/i18n/ko-KR.js?v={{$version}}"></script>
+    <script src="/theme/{{$theme}}/assets/i18n/fa-IR.js?v={{$version}}"></script>
 </head>
 
 <body>
@@ -57,19 +59,6 @@
 <script src="/theme/{{$theme}}/assets/vendors.async.js?v={{$version}}"></script>
 <script src="/theme/{{$theme}}/assets/components.async.js?v={{$version}}"></script>
 <script src="/theme/{{$theme}}/assets/umi.js?v={{$version}}"></script>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1E9Z5LRRK"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-
-    gtag('js', new Date());
-
-    gtag('config', 'G-P1E9Z5LRRK');
-</script>
 @if (file_exists(public_path("/theme/{$theme}/assets/custom.js")))
     <script src="/theme/{{$theme}}/assets/custom.js?v={{$version}}"></script>
 @endif

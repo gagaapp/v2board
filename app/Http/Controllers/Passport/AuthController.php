@@ -6,6 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Passport\AuthRegister;
 use App\Http\Requests\Passport\AuthForget;
 use App\Http\Requests\Passport\AuthLogin;
+use App\Jobs\SendEmailJob;
+use App\Services\AuthService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use App\Models\Plan;
@@ -18,12 +20,67 @@ use ReCaptcha\ReCaptcha;
 
 class AuthController extends Controller
 {
+    public function loginWithMailLink(Request $request)
+    {
+        if (!(int)config('v2board.login_with_mail_link_enable')) {
+            abort(404);
+        }
+        $params = $request->validate([
+            'email' => 'required|email',
+            'redirect' => 'nullable'
+        ]);
+
+        if (Cache::get(CacheKey::get('LAST_SEND_LOGIN_WITH_MAIL_LINK_TIMESTAMP', $params['email']))) {
+            abort(500, __('Sending frequently, please try again later'));
+        }
+
+        $user = User::where('email', $params['email'])->first();
+        if (!$user) {
+            return response([
+                'data' => true
+            ]);
+        }
+
+        $code = Helper::guid();
+        $key = CacheKey::get('TEMP_TOKEN', $code);
+        Cache::put($key, $user->id, 300);
+        Cache::put(CacheKey::get('LAST_SEND_LOGIN_WITH_MAIL_LINK_TIMESTAMP', $params['email']), time(), 60);
+
+
+        $redirect = '/#/login?verify=' . $code . '&redirect=' . ($request->input('redirect') ? $request->input('redirect') : 'dashboard');
+        if (config('v2board.app_url')) {
+            $link = config('v2board.app_url') . $redirect;
+        } else {
+            $link = url($redirect);
+        }
+
+        SendEmailJob::dispatch([
+            'email' => $user->email,
+            'subject' => __('Login to :name', [
+                'name' => config('v2board.app_name', 'V2Board')
+            ]),
+            'template_name' => 'login',
+            'template_value' => [
+                'name' => config('v2board.app_name', 'V2Board'),
+                'link' => $link,
+                'url' => config('v2board.app_url')
+            ]
+        ]);
+
+        return response([
+            'data' => $link
+        ]);
+
+    }
+
     public function register(AuthRegister $request)
     {
         if ((int)config('v2board.register_limit_by_ip_enable', 0)) {
             $registerCountByIP = Cache::get(CacheKey::get('REGISTER_IP_RATE_LIMIT', $request->ip())) ?? 0;
             if ((int)$registerCountByIP >= (int)config('v2board.register_limit_count', 3)) {
-                abort(500, __('Register frequently, please try again after 1 hour'));
+                abort(500, __('Register frequently, please try again after :minute minute', [
+                    'minute' => config('v2board.register_limit_expire', 60)
+                ]));
             }
         }
         if ((int)config('v2board.recaptcha_enable', 0)) {
@@ -99,6 +156,7 @@ class AuthController extends Controller
                 $user->plan_id = $plan->id;
                 $user->group_id = $plan->group_id;
                 $user->expired_at = time() + (config('v2board.try_out_hour', 1) * 3600);
+                $user->speed_limit = $plan->speed_limit;
             }
         }
 
@@ -109,12 +167,6 @@ class AuthController extends Controller
             Cache::forget(CacheKey::get('EMAIL_VERIFY_CODE', $request->input('email')));
         }
 
-        $data = [
-            'token' => $user->token,
-            'auth_data' => base64_encode("{$user->email}:{$user->password}")
-        ];
-        $request->session()->put('email', $user->email);
-        $request->session()->put('id', $user->id);
         $user->last_login_at = time();
         $user->save();
 
@@ -125,8 +177,11 @@ class AuthController extends Controller
                 (int)config('v2board.register_limit_expire', 60) * 60
             );
         }
+
+        $authService = new AuthService($user);
+
         return response()->json([
-            'data' => $data
+            'data' => $authService->generateAuthData($request)
         ]);
     }
 
@@ -134,6 +189,15 @@ class AuthController extends Controller
     {
         $email = $request->input('email');
         $password = $request->input('password');
+
+        if ((int)config('v2board.password_limit_enable', 1)) {
+            $passwordErrorCount = (int)Cache::get(CacheKey::get('PASSWORD_ERROR_LIMIT', $email), 0);
+            if ($passwordErrorCount >= (int)config('v2board.password_limit_count', 5)) {
+                abort(500, __('There are too many password errors, please try again after :minute minutes.', [
+                    'minute' => config('v2board.password_limit_expire', 60)
+                ]));
+            }
+        }
 
         $user = User::where('email', $email)->first();
         if (!$user) {
@@ -145,6 +209,13 @@ class AuthController extends Controller
             $password,
             $user->password)
         ) {
+            if ((int)config('v2board.password_limit_enable')) {
+                Cache::put(
+                    CacheKey::get('PASSWORD_ERROR_LIMIT', $email),
+                    (int)$passwordErrorCount + 1,
+                    60 * (int)config('v2board.password_limit_expire', 60)
+                );
+            }
             abort(500, __('Incorrect email or password'));
         }
 
@@ -152,22 +223,9 @@ class AuthController extends Controller
             abort(500, __('Your account has been suspended'));
         }
 
-        $data = [
-            'token' => $user->token,
-            'auth_data' => base64_encode("{$user->email}:{$user->password}")
-        ];
-        $request->session()->put('email', $user->email);
-        $request->session()->put('id', $user->id);
-        if ($user->is_admin) {
-            $request->session()->put('is_admin', true);
-            $data['is_admin'] = true;
-        }
-        if ($user->is_staff) {
-            $request->session()->put('is_staff', true);
-            $data['is_staff'] = true;
-        }
+        $authService = new AuthService($user);
         return response([
-            'data' => $data
+            'data' => $authService->generateAuthData($request)
         ]);
     }
 
@@ -196,47 +254,25 @@ class AuthController extends Controller
             if ($user->banned) {
                 abort(500, __('Your account has been suspended'));
             }
-            $request->session()->put('email', $user->email);
-            $request->session()->put('id', $user->id);
-            if ($user->is_admin) {
-                $request->session()->put('is_admin', true);
-            }
             Cache::forget($key);
+            $authService = new AuthService($user);
             return response([
-                'data' => true
+                'data' => $authService->generateAuthData($request)
             ]);
         }
     }
 
-    public function getTempToken(Request $request)
-    {
-        $user = User::where('token', $request->input('token'))->first();
-        if (!$user) {
-            abort(500, __('Token error'));
-        }
-
-        $code = Helper::guid();
-        $key = CacheKey::get('TEMP_TOKEN', $code);
-        Cache::put($key, $user->id, 60);
-        return response([
-            'data' => $code
-        ]);
-    }
-
     public function getQuickLoginUrl(Request $request)
     {
-        $authData = explode(':', base64_decode($request->input('auth_data')));
-        if (!isset($authData[0])) abort(403, __('Token error'));
-        $user = User::where('email', $authData[0])
-            ->where('password', $authData[1])
-            ->first();
-        if (!$user) {
-            abort(500, __('Token error'));
-        }
+        $authorization = $request->input('auth_data') ?? $request->header('authorization');
+        if (!$authorization) abort(403, '未登录或登陆已过期');
+
+        $user = AuthService::decryptAuthData($authorization);
+        if (!$user) abort(403, '未登录或登陆已过期');
 
         $code = Helper::guid();
         $key = CacheKey::get('TEMP_TOKEN', $code);
-        Cache::put($key, $user->id, 60);
+        Cache::put($key, $user['id'], 60);
         $redirect = '/#/login?verify=' . $code . '&redirect=' . ($request->input('redirect') ? $request->input('redirect') : 'dashboard');
         if (config('v2board.app_url')) {
             $url = config('v2board.app_url') . $redirect;
@@ -245,19 +281,6 @@ class AuthController extends Controller
         }
         return response([
             'data' => $url
-        ]);
-    }
-
-    public function check(Request $request)
-    {
-        $data = [
-            'is_login' => $request->session()->get('id') ? true : false
-        ];
-        if ($request->session()->get('is_admin')) {
-            $data['is_admin'] = true;
-        }
-        return response([
-            'data' => $data
         ]);
     }
 
@@ -281,5 +304,4 @@ class AuthController extends Controller
             'data' => true
         ]);
     }
-
 }

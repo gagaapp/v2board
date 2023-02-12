@@ -20,7 +20,8 @@
             },
             version: '{{$version}}',
             background_url: '{{$background_url}}',
-            logo: '{{$logo}}'
+            logo: '{{$logo}}',
+            secure_path: '{{$secure_path}}'
         }
     </script>
 </head>
@@ -30,19 +31,6 @@
 <script src="/assets/admin/vendors.async.js?v={{$version}}"></script>
 <script src="/assets/admin/components.async.js?v={{$version}}"></script>
 <script src="/assets/admin/umi.js?v={{$version}}"></script>
-<!-- Global site tag (gtag.js) - Google Analytics -->
-<script async src="https://www.googletagmanager.com/gtag/js?id=G-P1E9Z5LRRK"></script>
-<script>
-    window.dataLayer = window.dataLayer || [];
-
-    function gtag() {
-        dataLayer.push(arguments);
-    }
-
-    gtag('js', new Date());
-
-    gtag('config', 'G-P1E9Z5LRRK');
-</script>
 </body>
 
 </html>

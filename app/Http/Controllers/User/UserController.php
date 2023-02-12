@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\User\UserTransfer;
 use App\Http\Requests\User\UserUpdate;
 use App\Http\Requests\User\UserChangePassword;
+use App\Services\AuthService;
 use App\Services\UserService;
 use App\Utils\CacheKey;
 use Illuminate\Http\Request;
@@ -18,17 +19,46 @@ use Illuminate\Support\Facades\Cache;
 
 class UserController extends Controller
 {
-    public function logout(Request $request)
+    public function getActiveSession(Request $request)
     {
-        $request->session()->flush();
+        $user = User::find($request->user['id']);
+        if (!$user) {
+            abort(500, __('The user does not exist'));
+        }
+        $authService = new AuthService($user);
         return response([
-            'data' => true
+            'data' => $authService->getSessions()
+        ]);
+    }
+
+    public function removeActiveSession(Request $request)
+    {
+        $user = User::find($request->user['id']);
+        if (!$user) {
+            abort(500, __('The user does not exist'));
+        }
+        $authService = new AuthService($user);
+        return response([
+            'data' => $authService->delSession($request->input('session_id'))
+        ]);
+    }
+
+    public function checkLogin(Request $request)
+    {
+        $data = [
+            'is_login' => $request->user['id'] ? true : false
+        ];
+        if ($request->user['is_admin']) {
+            $data['is_admin'] = true;
+        }
+        return response([
+            'data' => $data
         ]);
     }
 
     public function changePassword(UserChangePassword $request)
     {
-        $user = User::find($request->session()->get('id'));
+        $user = User::find($request->user['id']);
         if (!$user) {
             abort(500, __('The user does not exist'));
         }
@@ -46,7 +76,6 @@ class UserController extends Controller
         if (!$user->save()) {
             abort(500, __('Save failed'));
         }
-        $request->session()->flush();
         return response([
             'data' => true
         ]);
@@ -54,7 +83,7 @@ class UserController extends Controller
 
     public function info(Request $request)
     {
-        $user = User::where('id', $request->session()->get('id'))
+        $user = User::where('id', $request->user['id'])
             ->select([
                 'email',
                 'transfer_enable',
@@ -86,12 +115,12 @@ class UserController extends Controller
     {
         $stat = [
             Order::where('status', 0)
-                ->where('user_id', $request->session()->get('id'))
+                ->where('user_id', $request->user['id'])
                 ->count(),
             Ticket::where('status', 0)
-                ->where('user_id', $request->session()->get('id'))
+                ->where('user_id', $request->user['id'])
                 ->count(),
-            User::where('invite_user_id', $request->session()->get('id'))
+            User::where('invite_user_id', $request->user['id'])
                 ->count()
         ];
         return response([
@@ -101,7 +130,7 @@ class UserController extends Controller
 
     public function getSubscribe(Request $request)
     {
-        $user = User::where('id', $request->session()->get('id'))
+        $user = User::where('id', $request->user['id'])
             ->select([
                 'plan_id',
                 'token',
@@ -109,7 +138,8 @@ class UserController extends Controller
                 'u',
                 'd',
                 'transfer_enable',
-                'email'
+                'email',
+                'uuid'
             ])
             ->first();
         if (!$user) {
@@ -131,7 +161,7 @@ class UserController extends Controller
 
     public function resetSecurity(Request $request)
     {
-        $user = User::find($request->session()->get('id'));
+        $user = User::find($request->user['id']);
         if (!$user) {
             abort(500, __('The user does not exist'));
         }
@@ -152,7 +182,7 @@ class UserController extends Controller
             'remind_traffic'
         ]);
 
-        $user = User::find($request->session()->get('id'));
+        $user = User::find($request->user['id']);
         if (!$user) {
             abort(500, __('The user does not exist'));
         }
@@ -169,7 +199,7 @@ class UserController extends Controller
 
     public function transfer(UserTransfer $request)
     {
-        $user = User::find($request->session()->get('id'));
+        $user = User::find($request->user['id']);
         if (!$user) {
             abort(500, __('The user does not exist'));
         }
@@ -188,7 +218,7 @@ class UserController extends Controller
 
     public function getQuickLoginUrl(Request $request)
     {
-        $user = User::find($request->session()->get('id'));
+        $user = User::find($request->user['id']);
         if (!$user) {
             abort(500, __('The user does not exist'));
         }

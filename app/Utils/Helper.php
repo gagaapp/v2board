@@ -2,14 +2,27 @@
 
 namespace App\Utils;
 
+//<<<<<<< HEAD
 use App\Models\ServerV2ray;
 use App\Models\ServerShadowsocks;
 use App\Models\ServerTrojan;
 use App\Models\User;
 use Illuminate\Http\Request;
 
+//=======
+//>>>>>>> official/master
 class Helper
 {
+    public static function uuidToBase64($uuid, $length)
+    {
+        return base64_encode(substr($uuid, 0, $length));
+    }
+
+    public static function getShadowsocksServerKey($timestamp, $length)
+    {
+        return base64_encode(substr(md5($timestamp), 0, $length));
+    }
+
     public static function guid($format = false)
     {
         if (function_exists('com_create_guid') === true) {

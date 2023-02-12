@@ -8,7 +8,7 @@ class AdminRoute
     public function map(Registrar $router)
     {
         $router->group([
-            'prefix' => 'admin',
+            'prefix' => config('v2board.secure_path', config('v2board.frontend_admin_path', hash('crc32b', config('app.key')))),
             'middleware' => 'admin'
         ], function ($router) {
             // Config
@@ -28,6 +28,9 @@ class AdminRoute
             $router->get ('/server/group/fetch', 'Admin\\Server\\GroupController@fetch');
             $router->post('/server/group/save', 'Admin\\Server\\GroupController@save');
             $router->post('/server/group/drop', 'Admin\\Server\\GroupController@drop');
+            $router->get ('/server/route/fetch', 'Admin\\Server\\RouteController@fetch');
+            $router->post('/server/route/save', 'Admin\\Server\\RouteController@save');
+            $router->post('/server/route/drop', 'Admin\\Server\\RouteController@drop');
             $router->get ('/server/manage/getNodes', 'Admin\\Server\\ManageController@getNodes');
             $router->post('/server/manage/sort', 'Admin\\Server\\ManageController@sort');
             $router->group([
@@ -50,7 +53,6 @@ class AdminRoute
                 $router->post('update', 'Admin\\Server\\V2rayController@update');
                 $router->post('copy', 'Admin\\Server\\V2rayController@copy');
                 $router->post('sort', 'Admin\\Server\\V2rayController@sort');
-                $router->post('viewConfig', 'Admin\\Server\\V2rayController@viewConfig');
             });
             $router->group([
                 'prefix' => 'server/shadowsocks'
@@ -83,6 +85,7 @@ class AdminRoute
             $router->get ('/stat/getOverride', 'Admin\\StatController@getOverride');
             $router->get ('/stat/getServerLastRank', 'Admin\\StatController@getServerLastRank');
             $router->get ('/stat/getOrder', 'Admin\\StatController@getOrder');
+            $router->get ('/stat/getStatUser', 'Admin\\StatController@getStatUser');
             // Notice
             $router->get ('/notice/fetch', 'Admin\\NoticeController@fetch');
             $router->post('/notice/save', 'Admin\\NoticeController@save');
@@ -112,8 +115,12 @@ class AdminRoute
             $router->post('/payment/save', 'Admin\\PaymentController@save');
             $router->post('/payment/drop', 'Admin\\PaymentController@drop');
             $router->post('/payment/show', 'Admin\\PaymentController@show');
+            $router->post('/payment/sort', 'Admin\\PaymentController@sort');
             // System
-            $router->get ('/system/getStatus', 'Admin\\SystemController@getStatus');
+            $router->get ('/system/getSystemStatus', 'Admin\\SystemController@getSystemStatus');
+            $router->get ('/system/getQueueStats', 'Admin\\SystemController@getQueueStats');
+            $router->get ('/system/getQueueWorkload', 'Admin\\SystemController@getQueueWorkload');
+            $router->get ('/system/getQueueMasters', '\\Laravel\\Horizon\\Http\\Controllers\\MasterSupervisorController@index');
             // Theme
             $router->get ('/theme/getThemes', 'Admin\\ThemeController@getThemes');
             $router->post('/theme/saveThemeConfig', 'Admin\\ThemeController@saveThemeConfig');

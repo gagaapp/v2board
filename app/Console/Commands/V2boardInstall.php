@@ -48,7 +48,9 @@ class V2boardInstall extends Command
             $this->info("  \ V /  / __/| |_) | (_) | (_| | | | (_| | ");
             $this->info("   \_/  |_____|____/ \___/ \__,_|_|  \__,_| ");
             if (\File::exists(base_path() . '/.env')) {
-                abort(500, 'V2board 已安装，如需重新安装请删除目录下.env文件');
+                $securePath = config('v2board.secure_path', config('v2board.frontend_admin_path', hash('crc32b', config('app.key'))));
+                $this->info("访问 http(s)://你的站点/{$securePath} 进入管理面板，你可以在用户中心修改你的密码。");
+                abort(500, '如需重新安装请删除目录下.env文件');
             }
 
             if (!copy(base_path() . '/.env.example', base_path() . '/.env')) {
@@ -89,16 +91,17 @@ class V2boardInstall extends Command
             while (!$email) {
                 $email = $this->ask('请输入管理员邮箱?');
             }
-            $password = '';
-            while (!$password) {
-                $password = $this->ask('请输入管理员密码?');
-            }
+            $password = Helper::guid(false);
             if (!$this->registerAdmin($email, $password)) {
                 abort(500, '管理员账号注册失败，请重试');
             }
 
             $this->info('一切就绪');
-            $this->info('访问 http(s)://你的站点/admin 进入管理面板');
+            $this->info("管理员邮箱：{$email}");
+            $this->info("管理员密码：{$password}");
+
+            $defaultSecurePath = hash('crc32b', config('app.key'));
+            $this->info("访问 http(s)://你的站点/{$defaultSecurePath} 进入管理面板，你可以在用户中心修改你的密码。");
         } catch (\Exception $e) {
             $this->error($e->getMessage());
         }

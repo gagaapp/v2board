@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Client\Protocols;
 
+use App\Utils\Dict;
+use phpDocumentor\Reflection\Types\Self_;
 use Symfony\Component\Yaml\Yaml;
 
 class Clash
@@ -24,6 +26,7 @@ class Clash
         header("subscription-userinfo: upload={$user['u']}; download={$user['d']}; total={$user['transfer_enable']}; expire={$user['expired_at']}");
         header('profile-update-interval: 24');
         header("content-disposition:attachment;filename*=UTF-8''".rawurlencode($appName));
+        header("profile-web-page-url:" . config('v2board.app_url'));
         $defaultConfig = base_path() . '/resources/rules/default.clash.yaml';
         $customConfig = base_path() . '/resources/rules/custom.clash.yaml';
         if (\File::exists($customConfig)) {
@@ -35,7 +38,14 @@ class Clash
         $proxies = [];
 
         foreach ($servers as $item) {
-            if ($item['type'] === 'shadowsocks') {
+            if ($item['type'] === 'shadowsocks'
+                && in_array($item['cipher'], [
+                    'aes-128-gcm',
+                    'aes-192-gcm',
+                    'aes-256-gcm',
+                    'chacha20-ietf-poly1305'
+                ])
+            ) {
                 array_push($proxy, self::buildShadowsocks($user['uuid'], $item));
                 array_push($proxies, $item['name']);
             }
@@ -121,7 +131,6 @@ class Clash
                     $array['ws-opts']['path'] = $wsSettings['path'];
                 if (isset($wsSettings['headers']['Host']) && !empty($wsSettings['headers']['Host']))
                     $array['ws-opts']['headers'] = ['Host' => $wsSettings['headers']['Host']];
-                // TODO: 2022.06.01 remove it
                 if (isset($wsSettings['path']) && !empty($wsSettings['path']))
                     $array['ws-path'] = $wsSettings['path'];
                 if (isset($wsSettings['headers']['Host']) && !empty($wsSettings['headers']['Host']))

@@ -5,7 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Requests\Admin\PlanSave;
 use App\Http\Requests\Admin\PlanSort;
 use App\Http\Requests\Admin\PlanUpdate;
+//<<<<<<< HEAD
 use App\Utils\Helper;
+//=======
+use App\Services\PlanService;
+//>>>>>>> official/master
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Models\Plan;
@@ -17,18 +21,20 @@ class PlanController extends Controller
 {
     public function fetch(Request $request)
     {
+
         Helper::MustSupperAdmin($request);
-        $counts = User::select(
-            DB::raw("plan_id"),
-            DB::raw("count(*) as count")
-        )
-            ->where('plan_id', '!=', NULL)
-            ->where(function ($query) {
-                $query->where('expired_at', '>=', time())
-                    ->orWhere('expired_at', NULL);
-            })
-            ->groupBy("plan_id")
-            ->get();
+//        $counts = User::select(
+//            DB::raw("plan_id"),
+//            DB::raw("count(*) as count")
+//        )
+//            ->where('plan_id', '!=', NULL)
+//            ->where(function ($query) {
+//                $query->where('expired_at', '>=', time())
+//                    ->orWhere('expired_at', NULL);
+//            })
+//            ->groupBy("plan_id")
+//            ->get();
+        $counts = PlanService::countActiveUsers();
         $plans = Plan::orderBy('sort', 'ASC')->get();
         foreach ($plans as $k => $v) {
             $plans[$k]->count = 0;
@@ -53,10 +59,13 @@ class PlanController extends Controller
             DB::beginTransaction();
             // update user group id and transfer
             try {
-                User::where('plan_id', $plan->id)->update([
-                    'group_id' => $params['group_id'],
-                    'transfer_enable' => $params['transfer_enable'] * 1073741824
-                ]);
+                if ($request->input('force_update')) {
+                    User::where('plan_id', $plan->id)->update([
+                        'group_id' => $params['group_id'],
+                        'transfer_enable' => $params['transfer_enable'] * 1073741824,
+                        'speed_limit' => $params['speed_limit']
+                    ]);
+                }
                 $plan->update($params);
             } catch (\Exception $e) {
                 DB::rollBack();

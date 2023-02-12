@@ -84,10 +84,10 @@ CREATE TABLE `v2_knowledge` (
 DROP TABLE IF EXISTS `v2_mail_log`;
 CREATE TABLE `v2_mail_log` (
                                `id` int(11) NOT NULL AUTO_INCREMENT,
-                               `email` varchar(64) CHARACTER SET utf8 NOT NULL,
-                               `subject` varchar(255) CHARACTER SET utf8 NOT NULL,
-                               `template_name` varchar(255) CHARACTER SET utf8 NOT NULL,
-                               `error` text CHARACTER SET utf8,
+                               `email` varchar(64) NOT NULL,
+                               `subject` varchar(255) NOT NULL,
+                               `template_name` varchar(255) NOT NULL,
+                               `error` text,
                                `created_at` int(11) NOT NULL,
                                `updated_at` int(11) NOT NULL,
                                PRIMARY KEY (`id`)
@@ -162,6 +162,7 @@ CREATE TABLE `v2_plan` (
                            `id` int(11) NOT NULL AUTO_INCREMENT,
                            `group_id` int(11) NOT NULL,
                            `transfer_enable` int(11) NOT NULL,
+                           `speed_limit` int(11) DEFAULT NULL,
                            `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
                            `show` tinyint(1) NOT NULL DEFAULT '0',
                            `sort` int(11) DEFAULT NULL,
@@ -176,6 +177,7 @@ CREATE TABLE `v2_plan` (
                            `onetime_price` int(11) DEFAULT NULL,
                            `reset_price` int(11) DEFAULT NULL,
                            `reset_traffic_method` tinyint(1) DEFAULT NULL,
+                           `capacity_limit` int(11) DEFAULT NULL,
                            `created_at` int(11) NOT NULL,
                            `updated_at` int(11) NOT NULL,
                            PRIMARY KEY (`id`)
@@ -192,16 +194,30 @@ CREATE TABLE `v2_server_group` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
+DROP TABLE IF EXISTS `v2_server_route`;
+CREATE TABLE `v2_server_route` (
+                                   `id` int(11) NOT NULL AUTO_INCREMENT,
+                                   `remarks` varchar(255) NOT NULL,
+                                   `match` text NOT NULL,
+                                   `action` varchar(11) NOT NULL,
+                                   `action_value` varchar(255) DEFAULT NULL,
+                                   `created_at` int(11) NOT NULL,
+                                   `updated_at` int(11) NOT NULL,
+                                   PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+
 DROP TABLE IF EXISTS `v2_server_shadowsocks`;
 CREATE TABLE `v2_server_shadowsocks` (
                                          `id` int(11) NOT NULL AUTO_INCREMENT,
                                          `group_id` varchar(255) NOT NULL,
+                                         `route_id` varchar(255) DEFAULT NULL,
                                          `parent_id` int(11) DEFAULT NULL,
                                          `tags` varchar(255) DEFAULT NULL,
                                          `name` varchar(255) NOT NULL,
                                          `rate` varchar(11) NOT NULL,
                                          `host` varchar(255) NOT NULL,
-                                         `port` int(11) NOT NULL,
+                                         `port` varchar(11) NOT NULL,
                                          `server_port` int(11) NOT NULL,
                                          `cipher` varchar(255) NOT NULL,
                                          `obfs` char(11) DEFAULT NULL,
@@ -218,12 +234,13 @@ DROP TABLE IF EXISTS `v2_server_trojan`;
 CREATE TABLE `v2_server_trojan` (
                                     `id` int(11) NOT NULL AUTO_INCREMENT COMMENT '节点ID',
                                     `group_id` varchar(255) NOT NULL COMMENT '节点组',
+                                    `route_id` varchar(255) DEFAULT NULL,
                                     `parent_id` int(11) DEFAULT NULL COMMENT '父节点',
                                     `tags` varchar(255) DEFAULT NULL COMMENT '节点标签',
                                     `name` varchar(255) NOT NULL COMMENT '节点名称',
                                     `rate` varchar(11) NOT NULL COMMENT '倍率',
                                     `host` varchar(255) NOT NULL COMMENT '主机名',
-                                    `port` int(11) NOT NULL COMMENT '连接端口',
+                                    `port` varchar(11) NOT NULL COMMENT '连接端口',
                                     `server_port` int(11) NOT NULL COMMENT '服务端口',
                                     `allow_insecure` tinyint(1) NOT NULL DEFAULT '0' COMMENT '是否允许不安全',
                                     `server_name` varchar(255) DEFAULT NULL,
@@ -239,10 +256,11 @@ DROP TABLE IF EXISTS `v2_server_v2ray`;
 CREATE TABLE `v2_server_v2ray` (
                                    `id` int(11) NOT NULL AUTO_INCREMENT,
                                    `group_id` varchar(255) NOT NULL,
-                                   `name` varchar(255) CHARACTER SET utf8mb4 NOT NULL,
+                                   `route_id` varchar(255) DEFAULT NULL,
+                                   `name` varchar(255) NOT NULL,
                                    `parent_id` int(11) DEFAULT NULL,
                                    `host` varchar(255) NOT NULL,
-                                   `port` char(11) NOT NULL,
+                                   `port` varchar(11) NOT NULL,
                                    `server_port` int(11) NOT NULL,
                                    `tls` tinyint(4) NOT NULL DEFAULT '0',
                                    `tags` varchar(255) DEFAULT NULL,
@@ -258,7 +276,7 @@ CREATE TABLE `v2_server_v2ray` (
                                    `created_at` int(11) NOT NULL,
                                    `updated_at` int(11) NOT NULL,
                                    PRIMARY KEY (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 
 DROP TABLE IF EXISTS `v2_stat_order`;
@@ -366,6 +384,7 @@ CREATE TABLE `v2_user` (
                            `uuid` varchar(36) NOT NULL,
                            `group_id` int(11) DEFAULT NULL,
                            `plan_id` int(11) DEFAULT NULL,
+                           `speed_limit` int(11) DEFAULT NULL,
                            `remind_expire` tinyint(4) DEFAULT '1',
                            `remind_traffic` tinyint(4) DEFAULT '1',
                            `token` char(32) NOT NULL,
@@ -378,4 +397,4 @@ CREATE TABLE `v2_user` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 
--- 2022-06-10 17:12:02
+-- 2022-12-15 05:24:08

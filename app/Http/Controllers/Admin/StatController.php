@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Models\CommissionLog;
 use App\Models\ServerShadowsocks;
 use App\Models\ServerTrojan;
+use App\Models\StatUser;
 use App\Services\ServerService;
 use App\Utils\Helper;
 use Illuminate\Http\Request;
@@ -47,7 +49,13 @@ class StatController extends Controller
                 'last_month_income' => Order::where('created_at', '>=', strtotime('-1 month', strtotime(date('Y-m-1'))))
                     ->where('created_at', '<', strtotime(date('Y-m-1')))
                     ->whereNotIn('status', [0, 2])
-                    ->sum('total_amount')
+                    ->sum('total_amount'),
+                'commission_month_payout' => CommissionLog::where('created_at', '>=', strtotime(date('Y-m-1')))
+                    ->where('created_at', '<', time())
+                    ->sum('get_amount'),
+                'commission_last_month_payout' => CommissionLog::where('created_at', '>=', strtotime('-1 month', strtotime(date('Y-m-1'))))
+                    ->where('created_at', '<', strtotime(date('Y-m-1')))
+                    ->sum('get_amount'),
             ]
         ]);
     }
@@ -94,7 +102,7 @@ class StatController extends Controller
     {
         $servers = [
             'shadowsocks' => ServerShadowsocks::where('parent_id', null)->get()->toArray(),
-            'vmess' => ServerV2ray::where('parent_id', null)->get()->toArray(),
+            'v2ray' => ServerV2ray::where('parent_id', null)->get()->toArray(),
             'trojan' => ServerTrojan::where('parent_id', null)->get()->toArray()
         ];
         $startAt = strtotime('-1 day', strtotime(date('Y-m-d')));
@@ -125,6 +133,24 @@ class StatController extends Controller
         return response([
             'data' => $statistics
         ]);
+    }
+
+    public function getStatUser(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer'
+        ]);
+        $current = $request->input('current') ? $request->input('current') : 1;
+        $pageSize = $request->input('pageSize') >= 10 ? $request->input('pageSize') : 10;
+        $builder = StatUser::orderBy('record_at', 'DESC')->where('user_id', $request->input('user_id'));
+
+        $total = $builder->count();
+        $records = $builder->forPage($current, $pageSize)
+            ->get();
+        return [
+            'data' => $records,
+            'total' => $total
+        ];
     }
 }
 
