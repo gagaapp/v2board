@@ -134,7 +134,7 @@ class Helper
     {
         // file_put_contents("/www/wwwroot/ahoo.info/test.log" ,"SuperAdminID______________________0");
         $uid = $request->user['id'];
-        file_put_contents("/www/wwwroot/ahoo.info/test.log" , $request->user['id']);
+        //file_put_contents("/www/wwwroot/ahoo.info/test.log" , $request->user['id']);
         $SuperAdminID = config("auth.SUPER_ADMIN_ID", "0");
         if ($SuperAdminID == $uid) {
             return true;
