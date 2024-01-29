@@ -235,6 +235,45 @@ class OrderService
         return true;
     }
 
+    // 如果订单已经取消, 用户仍然付款了, 则调用这个方法,处理已经取消的订单
+    public function paidIncludeCancelOrder(string $callbackNo)
+    {
+        $order = $this->order;
+        if ($order->status !== 0 && $order->status !== 2) return true;
+        DB::beginTransaction();
+        if ($order->status === 2) {
+            // 订单已经取消
+            // 如果订单余额付款, 则先扣除余额, 然后完成订单
+            if ($order->balance_amount) {
+                $userService = new UserService();
+                // 处理余额
+                if (!$userService->addBalance($order->user_id, -$order->balance_amount)) {
+                    // 余额处理失败, 不能直接将用户的前存入账户, 有漏洞, 因为支付回调可以重复调用, 如果每次调用都加入余额, 就有很大问题. 遇到这种情况, 有客服人工处理
+
+//                    if (!$userService->addBalance($order->user_id, $order->total_amount)) {
+//                        // 添加余额失败
+//                        DB::rollBack();
+//                        return false;
+//                    }
+                    // 用户购买失败, 添加余额成功. 保持订单状态为取消
+                    DB::rollBack();
+                    return true;
+                }
+                // 余额扣款成功, 正常完成订单
+            }
+        }
+        $order->status = 1;
+        $order->paid_at = time();
+        $order->callback_no = $callbackNo;
+        if (!$order->save()) {
+            DB::rollBack();
+            return false;
+        }
+        DB::commit();
+        OrderHandleJob::dispatch($order->trade_no);
+        return true;
+    }
+
     public function cancel():bool
     {
         $order = $this->order;

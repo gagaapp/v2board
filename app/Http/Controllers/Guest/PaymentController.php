@@ -34,7 +34,7 @@ class PaymentController extends Controller
         }
         if ($order->status !== 0) return true;
         $orderService = new OrderService($order);
-        if (!$orderService->paid($callbackNo)) {
+        if (!$orderService->paidIncludeCancelOrder($callbackNo)) {
             return false;
         }
         $telegramService = new TelegramService();
