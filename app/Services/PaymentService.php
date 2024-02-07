@@ -45,9 +45,21 @@ class PaymentService
             $notifyUrl = $this->config['notify_domain'] . $parseUrl['path'];
         }
 
+        $retUrl = "";
+
+        try {
+            $retUrl = $_SERVER['HTTP_ORIGIN'];
+        } catch (\Exception $e) {
+            $retUrl = config('v2board.app_url');
+        }
+
         return $this->payment->pay([
             'notify_url' => $notifyUrl,
-            'return_url' => config('v2board.app_url') . '/#/order/' . $order['trade_no'],
+//            'return_url' => config('v2board.app_url') . '/#/order/' . $order['trade_no'],
+        // 使用vboard
+            'return_url' => $retUrl,
+//            'return_url' => config('v2board.app_url') . '/#/dashboard/',
+
             'trade_no' => $order['trade_no'],
             'total_amount' => $order['total_amount'],
             'user_id' => $order['user_id'],
