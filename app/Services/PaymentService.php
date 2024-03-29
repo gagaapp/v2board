@@ -57,9 +57,9 @@ class PaymentService
             'notify_url' => $notifyUrl,
 //            'return_url' => config('v2board.app_url') . '/#/order/' . $order['trade_no'],
         // 使用vboard
-            'return_url' => $retUrl,
+//            'return_url' => $retUrl,
 //            'return_url' => config('v2board.app_url') . '/#/dashboard/',
-
+            'return_url' => $retUrl . '/orders/' . $order['trade_no'],
             'trade_no' => $order['trade_no'],
             'total_amount' => $order['total_amount'],
             'user_id' => $order['user_id'],
