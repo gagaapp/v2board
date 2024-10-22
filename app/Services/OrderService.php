@@ -317,7 +317,13 @@ class OrderService
         // 新购
         if ($order->type === 1) $this->buyByResetTraffic();
         $this->user->plan_id = $plan->id;
-        $this->user->group_id = $plan->group_id;
+        $tryPlan = Plan::find(config('v2board.try_out_plan_id'));
+        if ($tryPlan && $tryPlan->group_id === $plan->group_id) {
+           // 新购买的套餐权限group_id 是试用套餐的group_id.
+            // 这种情况我们约定当前新购套餐为 专线套餐. 用户的权限group_id 由管理员手动设置
+        } else {
+            $this->user->group_id = $plan->group_id;
+        }
         $this->user->expired_at = $this->getTime($order->period, $this->user->expired_at);
     }
 
