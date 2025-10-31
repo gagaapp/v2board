@@ -12,6 +12,8 @@ class ClientController extends Controller
 {
     public function subscribe(Request $request)
     {
+        // 临时方法, 对外订阅统一入口:
+        $serverHost = "dash.route456.com";
         $flag = $request->input('flag')
             ?? ($_SERVER['HTTP_USER_AGENT'] ?? '');
         $flag = strtolower($flag);
@@ -26,6 +28,9 @@ class ClientController extends Controller
                 if (!empty($server['tags'])) {
                     $tagsString = implode(", ", array_reverse($server['tags']));
                     $server['name'] .= " - " . $tagsString;
+                }
+                if (!empty($serverHost) && $server['host'] !== $serverHost) {
+                    $server['host'] = $serverHost;
                 }
 
             }

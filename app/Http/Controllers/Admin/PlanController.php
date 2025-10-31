@@ -41,6 +41,9 @@ class PlanController extends Controller
             foreach ($counts as $kk => $vv) {
                 if ($plans[$k]->id === $counts[$kk]->plan_id) $plans[$k]->count = $counts[$kk]->count;
             }
+            // 修改 name 属性，在名称前拼接 Plan ID
+            $plans[$k]->name = $plans[$k]->id . ' - ' . $plans[$k]->name;
+
         }
         return response([
             'data' => $plans
